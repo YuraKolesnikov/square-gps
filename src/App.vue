@@ -78,8 +78,9 @@ export default {
       const landmark = this.map.geoObjects.get(i)
       if (!landmark.balloon.isOpen()) {
         console.log(this.landmarks[i])
-        this.map.setCenter([this.landmarks[i].latitude, this.landmarks[i].longitude])
-        landmark.balloon.open();
+        this.map.setCenter([this.landmarks[i].latitude, this.landmarks[i].longitude], 12, { duration: 300 })
+        .then(() => landmark.balloon.open())
+
       } else {
         landmark.balloon.close();
       }
