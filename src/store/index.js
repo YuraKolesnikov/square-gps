@@ -6,14 +6,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     isLoading: false,
-    landmarks: [
-      {
-        id: 1,
-        title: 'Landmark #1',
-        latitude: 55.75,
-        longitude: 37.61
-      }
-    ]
+    landmarks: []
   },
   mutations: {
     ADD_LANDMARK: (state, landmark) => {

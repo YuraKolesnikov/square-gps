@@ -3,7 +3,7 @@
     <button @click="addLandmark" v-if="canAddLandmark">{{ isLoading ? 'Creating...' : 'Add new landmark' }}</button>
     <ul>
       <template v-for="(landmark, i) in landmarks">
-        <li v-if="landmark && landmark.title" @click="moveToLandmark(i)">
+        <li v-if="landmark && landmark.title" @click="moveToLandmark(i)" :key="`landmark_${landmark.id}`">
           {{ landmark.title }}
         </li>
       </template>
@@ -24,9 +24,16 @@ export default {
       }
     }
   },
-  mounted() {
-    ymaps.ready(this.init)
+
+  created() {
+    navigator.geolocation.getCurrentPosition(position => {
+      this.landmarkData.latitude = position.coords.latitude.toFixed(2)
+      this.landmarkData.longitude = position.coords.longitude.toFixed(2)
+      ymaps.ready(this.init)
+      this.addLandmark()
+    })
   },
+
   computed: {
     ...mapState(['landmarks', 'isLoading']),
 
@@ -39,14 +46,13 @@ export default {
 
     init() {
       this.map = new ymaps.Map('map', {
-        center: [55.75, 37.61],
+        center: [this.landmarkData.latitude, this.landmarkData.longitude],
         zoom: 12,
         controls: ['zoomControl']
       })
 
       this.landmarks.forEach(lm => {
         const placemark = this.createPlacemark(lm)
-
         this.map.geoObjects.add(placemark)
       })
 
