@@ -1,23 +1,35 @@
 <template>
   <div class="home">
-    <button @click="addLandmark" v-if="canAddLandmark">{{ isLoading ? 'Creating...' : 'Add new landmark' }}</button>
-    <ul>
-      <template v-for="(landmark, i) in landmarks">
-        <li v-if="landmark && landmark.title" @click="moveToLandmark(i)" :key="`landmark_${landmark.id}`">
-          {{ landmark.title }}
-        </li>
-      </template>
-    </ul>
-    <div id="map" class="map"></div>
+      <v-row no-gutters>
+        <v-col cols="3" class="landmark-list">
+          <h2 class="landmark-header">Landmarks</h2>
+          <v-list-item-group>
+            <template v-for="(landmark, i) in landmarks">
+              <v-list-item :key="`landmark_${i}`" v-if="landmark && landmark.title" @click="moveToLandmark(i)">
+                <v-list-item-content>
+                  <h4 class="body-1" v-if="landmark && landmark.title">{{ landmark.title }}</h4>
+                  <p class="text--secondary" v-if="landmark && landmark.latitude && landmark.longitude">{{ landmark.latitude }}, {{ landmark.longitude }}</p>
+                </v-list-item-content>
+              </v-list-item>
+            </template>
+          </v-list-item-group>
+        </v-col>
+        <v-col cols="9">
+          <div id="map" class="map"></div>
+        </v-col>
+      </v-row>
+    <v-btn small fab absolute @click="addLandmark" class="add-button" :loading="isLoading" v-if="canAddLandmark">
+      <v-icon>mdi-plus</v-icon>
+    </v-btn>
   </div>
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+import { mapState, mapActions, mapMutations } from 'vuex'
 export default {
   data() {
     return {
-      map: null,
+      currentLandmark: null,
       landmarkData: {
         longitude: null,
         latitude: null
@@ -27,15 +39,19 @@ export default {
 
   created() {
     navigator.geolocation.getCurrentPosition(position => {
-      this.landmarkData.latitude = position.coords.latitude.toFixed(2)
-      this.landmarkData.longitude = position.coords.longitude.toFixed(2)
+      this.landmarkData.latitude = position.coords.latitude.toFixed(6)
+      this.landmarkData.longitude = position.coords.longitude.toFixed(6)
       ymaps.ready(this.init)
-      this.addLandmark()
+
+      if (this.map === null) {
+
+        this.addLandmark()
+      }
     })
   },
 
   computed: {
-    ...mapState(['landmarks', 'isLoading']),
+    ...mapState(['landmarks', 'isLoading', 'map']),
 
     canAddLandmark() {
       return this.landmarkData.longitude && this.landmarkData.latitude
@@ -43,13 +59,13 @@ export default {
   },
   methods: {
     ...mapActions(['ADD_LANDMARK']),
-
+    ...mapMutations(['SET_MAP']),
     init() {
-      this.map = new ymaps.Map('map', {
+      this.SET_MAP(new ymaps.Map('map', {
         center: [this.landmarkData.latitude, this.landmarkData.longitude],
         zoom: 12,
         controls: ['zoomControl']
-      })
+      }))
 
       this.landmarks.forEach(lm => {
         const placemark = this.createPlacemark(lm)
@@ -58,9 +74,11 @@ export default {
 
       this.map.events.add('click', e => {
         const coords = e.get('coords')
-        this.landmarkData.latitude = +coords[0].toFixed(2)
-        this.landmarkData.longitude = +coords[1].toFixed(2)
+        this.landmarkData.latitude = +coords[0].toFixed(6)
+        this.landmarkData.longitude = +coords[1].toFixed(6)
       })
+
+      this.clearLandmarkData()
     },
 
     addLandmark() {
@@ -84,8 +102,10 @@ export default {
 
     moveToLandmark(i) {
       const landmark = this.map.geoObjects.get(i)
-
       if (!landmark.balloon.isOpen()) {
+        const urlId = i + 1
+        this.$router.replace({ name: 'Home', query: { id: urlId } })
+
         this.map.setCenter(
           [this.landmarks[i].latitude, this.landmarks[i].longitude],
           this.map.getZoom(),
@@ -126,14 +146,35 @@ export default {
 
 <style lang="scss">
 .home {
-  height: 100vh;
+  height: calc(100vh - 90px);
   width: 100vw;
-  padding: 20px;
+  position: relative;
+
+  .container, .row {
+    height: 100%;
+  }
+}
+
+.add-button {
+  bottom: 10px !important;
+  right: 15px !important;
 }
 
 .map {
-  height: 80%;
-  width: 60%;
+  height: 100%;
+  width: 100%;
   margin: auto;
+}
+
+.landmark-list {
+  box-shadow: 0 2px 4px -1px rgba(0,0,0,.2), 0 4px 5px 0 rgba(0,0,0,.14), 0 1px 10px 0 rgba(0,0,0,.12);
+}
+
+.landmark-header {
+  padding: 16px;
+}
+
+.text--secondary {
+  opacity: .5 !important;
 }
 </style>

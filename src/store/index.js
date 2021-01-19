@@ -6,13 +6,15 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     isLoading: false,
-    landmarks: []
+    landmarks: [],
+    map: null
   },
   mutations: {
     ADD_LANDMARK: (state, landmark) => {
       landmark && state.landmarks.push(landmark)
       state.landmarks = state.landmarks.filter(i => !!i)
     },
+    SET_MAP: (state, map) => state.map = map,
     SET_LOADING_STATUS: (state, status) => state.isLoading = status
   },
   actions: {
